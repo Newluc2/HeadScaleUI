@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Headscale WebUI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+</head>
+<body>
+  <!-- ======== LOGIN SCREEN ======== -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          <path d="M2 12h20"/>
+        </svg>
+        <h1>Headscale</h1>
+        <p class="subtitle">Administration Panel</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-user">Nom d'utilisateur</label>
+          <input type="text" id="login-user" placeholder="admin" autocomplete="username" required autofocus>
+        </div>
+        <div class="form-group">
+          <label for="login-pass">Mot de passe</label>
+          <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+        <div id="login-error" class="error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full">
+          <span>Se connecter</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======== MAIN APP ======== -->
+  <div id="app" class="hidden">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          <path d="M2 12h20"/>
+        </svg>
+        <span>Headscale UI</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-page="nodes">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span>Nodes</span>
+        </a>
+        <a href="#" class="nav-item" data-page="add-node">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+          <span>Ajouter un node</span>
+        </a>
+        <a href="#" class="nav-item" data-page="users-keys">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Users & Clés</span>
+        </a>
+        <a href="#" class="nav-item" data-page="shell">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          <span>Shell</span>
+        </a>
+        <a href="#" class="nav-item" data-page="logs">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>Logs</span>
+        </a>
+        <a href="#" class="nav-item" data-page="settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Paramètres</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="avatar" id="user-avatar">A</div>
+          <div class="user-details">
+            <span id="user-name">admin</span>
+            <span id="user-role" class="role-badge">admin</span>
+          </div>
+        </div>
+        <button class="btn-icon" id="btn-logout" title="Déconnexion">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile header -->
+    <header class="mobile-header">
+      <button class="btn-icon" id="btn-menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span>Headscale UI</span>
+      <button class="btn-icon" id="btn-mobile-logout" title="Déconnexion">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </header>
+
+    <!-- Main content area -->
+    <main class="main-content">
+      <!-- ========== NODES PAGE ========== -->
+      <section id="page-nodes" class="page active">
+        <div class="page-header">
+          <h2>Nodes</h2>
+          <button class="btn btn-secondary" id="btn-refresh-nodes">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Rafraîchir
+          </button>
+        </div>
+        <div id="nodes-loading" class="loading">Chargement des nodes...</div>
+        <div id="nodes-error" class="error-box hidden"></div>
+        <div class="table-container">
+          <table class="data-table" id="nodes-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>User</th>
+                <th>IP</th>
+                <th>Statut</th>
+                <th>Dernière connexion</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="nodes-tbody"></tbody>
+          </table>
+        </div>
+        <div id="nodes-empty" class="empty-state hidden">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <p>Aucun node trouvé</p>
+        </div>
+      </section>
+
+      <!-- ========== ADD NODE PAGE ========== -->
+      <section id="page-add-node" class="page">
+        <div class="page-header">
+          <h2>Ajouter un node</h2>
+        </div>
+        <div class="card">
+          <h3>Générer une clé de pré-authentification</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>User</label>
+              <select id="add-node-user" class="form-select">
+                <option value="">Chargement...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Expiration</label>
+              <select id="add-node-expiry" class="form-select">
+                <option value="1h">1 heure</option>
+                <option value="24h" selected>24 heures</option>
+                <option value="168h">7 jours</option>
+                <option value="720h">30 jours</option>
+                <option value="8760h">1 an</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="add-node-reusable">
+              <span>Réutilisable</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="add-node-ephemeral">
+              <span>Éphémère</span>
+            </label>
+          </div>
+          <button class="btn btn-primary" id="btn-generate-key">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            Générer la clé
+          </button>
+          <div id="generated-key-result" class="hidden">
+            <div class="result-box">
+              <h4>Clé générée</h4>
+              <div class="code-block" id="generated-key-value"></div>
+              <h4>Commande Tailscale</h4>
+              <div class="code-block-wrapper">
+                <pre class="code-block" id="tailscale-command"></pre>
+                <button class="btn-copy" id="btn-copy-cmd" title="Copier">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <span>Copier</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== USERS & KEYS PAGE ========== -->
+      <section id="page-users-keys" class="page">
+        <div class="page-header">
+          <h2>Users & Clés de pré-authentification</h2>
+          <button class="btn btn-secondary" id="btn-refresh-users">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Rafraîchir
+          </button>
+        </div>
+
+        <!-- Create user -->
+        <div class="card card-compact" id="create-user-card">
+          <div class="card-row">
+            <input type="text" id="new-user-name" placeholder="Nom du nouvel user" class="form-input">
+            <button class="btn btn-primary" id="btn-create-user">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Créer un user
+            </button>
+          </div>
+        </div>
+
+        <div id="users-loading" class="loading">Chargement...</div>
+        <div id="users-list"></div>
+      </section>
+
+      <!-- ========== SHELL PAGE ========== -->
+      <section id="page-shell" class="page">
+        <div class="page-header">
+          <h2>Shell Headscale</h2>
+          <span class="badge badge-warning">Admin uniquement</span>
+        </div>
+        <div class="card">
+          <p class="hint">Seules les commandes <code>headscale</code> sont autorisées. Exemple : <code>headscale nodes list</code></p>
+          <div class="terminal" id="terminal">
+            <div class="terminal-output" id="terminal-output">
+              <div class="terminal-line system">Bienvenue dans le shell Headscale. Tapez une commande pour commencer.</div>
+            </div>
+            <form class="terminal-input-line" id="shell-form">
+              <span class="terminal-prompt">$</span>
+              <input type="text" id="shell-input" class="terminal-input" placeholder="headscale nodes list" autocomplete="off" spellcheck="false">
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== LOGS PAGE ========== -->
+      <section id="page-logs" class="page">
+        <div class="page-header">
+          <h2>Journal d'audit</h2>
+          <button class="btn btn-secondary" id="btn-refresh-logs">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Rafraîchir
+          </button>
+        </div>
+        <div class="table-container">
+          <table class="data-table" id="logs-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Utilisateur</th>
+                <th>Action</th>
+                <th>Détail</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========== SETTINGS PAGE ========== -->
+      <section id="page-settings" class="page">
+        <div class="page-header">
+          <h2>Paramètres</h2>
+        </div>
+
+        <div class="settings-grid">
+          <!-- Theme -->
+          <div class="card">
+            <h3>Apparence</h3>
+            <div class="form-group">
+              <label>Thème</label>
+              <div class="theme-switcher">
+                <button class="btn btn-secondary" id="btn-theme-light">☀️ Clair</button>
+                <button class="btn btn-secondary active" id="btn-theme-dark">🌙 Sombre</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Change password -->
+          <div class="card">
+            <h3>Changer le mot de passe</h3>
+            <form id="change-password-form">
+              <div class="form-group">
+                <label>Mot de passe actuel</label>
+                <input type="password" id="cp-current" required>
+              </div>
+              <div class="form-group">
+                <label>Nouveau mot de passe</label>
+                <input type="password" id="cp-new" required>
+              </div>
+              <div class="form-group">
+                <label>Confirmer</label>
+                <input type="password" id="cp-confirm" required>
+              </div>
+              <div id="cp-error" class="error-msg hidden"></div>
+              <div id="cp-success" class="success-msg hidden"></div>
+              <button class="btn btn-primary" type="submit">Changer le mot de passe</button>
+            </form>
+          </div>
+
+          <!-- WebUI Users -->
+          <div class="card" id="webui-users-card">
+            <h3>Utilisateurs WebUI</h3>
+            <div class="card-row" style="margin-bottom:1rem">
+              <input type="text" id="wui-username" placeholder="Identifiant" class="form-input">
+              <input type="password" id="wui-password" placeholder="Mot de passe" class="form-input">
+              <select id="wui-role" class="form-select" style="width:auto">
+                <option value="admin">Admin</option>
+                <option value="readonly">Lecture seule</option>
+              </select>
+              <button class="btn btn-primary" id="btn-add-wui-user">Ajouter</button>
+            </div>
+            <div id="webui-users-list"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-container"></div>
+
+  <!-- Confirm modal -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3 id="confirm-title">Confirmation</h3>
+      <p id="confirm-message"></p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="confirm-cancel">Annuler</button>
+        <button class="btn btn-danger" id="confirm-ok">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

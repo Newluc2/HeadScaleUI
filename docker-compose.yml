@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  headscale-webui:
+    build: .
+    container_name: headscale-webui
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HEADSCALE_URL=https://headscale.example.com
+      - HEADSCALE_BIN=headscale
+      - SESSION_SECRET=change-this-to-a-random-secret
+      - ADMIN_USER=admin
+      - ADMIN_PASS=admin
+      - DB_PATH=/app/data/headscale-webui.db
+    volumes:
+      - webui-data:/app/data
+      # If headscale is on the same host, mount the binary:
+      # - /usr/local/bin/headscale:/usr/local/bin/headscale:ro
+      # And if using Unix socket:
+      # - /var/run/headscale:/var/run/headscale
+    # If headscale runs as another container on the same network:
+    # network_mode: "host"
+
+volumes:
+  webui-data:
