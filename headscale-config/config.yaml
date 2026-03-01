@@ -1,0 +1,29 @@
+# Headscale Configuration
+# Documentation: https://github.com/juanfont/headscale/blob/main/config-example.yaml
+#
+# Remplacez VOTRE_IP_OU_DOMAINE par l'adresse publique de votre serveur.
+
+server_url: http://VOTRE_IP_OU_DOMAINE:8080
+listen_addr: 0.0.0.0:8080
+metrics_listen_addr: 0.0.0.0:9090
+
+private_key_path: /var/lib/headscale/private.key
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+
+database:
+  type: sqlite3
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+
+dns:
+  magic_dns: true
+  base_domain: headscale.local
+  nameservers:
+    global:
+      - 1.1.1.1
+      - 8.8.8.8

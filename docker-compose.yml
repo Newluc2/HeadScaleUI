@@ -1,6 +1,20 @@
 version: "3.8"
 
 services:
+  # ── Headscale Server ──────────────────────────────────
+  headscale:
+    image: headscale/headscale:latest
+    container_name: headscale
+    restart: unless-stopped
+    ports:
+      - "8080:8080"       # Port principal Headscale
+      - "9090:9090"       # Metrics (optionnel)
+    volumes:
+      - headscale-data:/var/lib/headscale
+      - ./headscale-config:/etc/headscale
+    command: serve
+    
+  # ── Headscale WebUI ───────────────────────────────────
   headscale-webui:
     build: .
     container_name: headscale-webui
@@ -9,7 +23,11 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
-      - HEADSCALE_URL=https://headscale.example.com
+      # URL publique de votre serveur Headscale
+      # Utilisée UNIQUEMENT pour générer la commande "tailscale up" 
+      # affichée dans l'interface. À remplacer par votre vrai domaine.
+      - HEADSCALE_URL=http://VOTRE_IP_OU_DOMAINE:8080
+      # Chemin du binaire headscale dans le conteneur
       - HEADSCALE_BIN=headscale
       - SESSION_SECRET=change-this-to-a-random-secret
       - ADMIN_USER=admin
@@ -17,12 +35,13 @@ services:
       - DB_PATH=/app/data/headscale-webui.db
     volumes:
       - webui-data:/app/data
-      # If headscale is on the same host, mount the binary:
-      # - /usr/local/bin/headscale:/usr/local/bin/headscale:ro
-      # And if using Unix socket:
-      # - /var/run/headscale:/var/run/headscale
-    # If headscale runs as another container on the same network:
-    # network_mode: "host"
+      # Monte le binaire headscale depuis le conteneur headscale
+      # Alternative : copier le binaire dans l'image Docker du WebUI
+      - headscale-data:/var/lib/headscale:ro
+      - ./headscale-config:/etc/headscale:ro
+    depends_on:
+      - headscale
 
 volumes:
+  headscale-data:
   webui-data:
