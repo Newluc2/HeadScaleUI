@@ -12,7 +12,7 @@ const API_PREFIX = `${BASE}/api/v1`;
  */
 async function hsAPI(method, path, body = null) {
   if (!config.headscaleApiKey) {
-    throw new Error('HEADSCALE_API_KEY non configurée. Générez une clé avec: headscale apikeys create');
+    throw new Error('HEADSCALE_API_KEY non configurée. Exécutez: headscale apikeys create  puis ajoutez la clé dans le docker-compose.yml');
   }
 
   const url = `${API_PREFIX}${path}`;
@@ -28,11 +28,17 @@ async function hsAPI(method, path, body = null) {
     opts.body = JSON.stringify(body);
   }
 
-  const res = await fetch(url, opts);
+  let res;
+  try {
+    res = await fetch(url, opts);
+  } catch (e) {
+    throw new Error(`Impossible de contacter Headscale sur ${BASE} : ${e.message}`);
+  }
+
   const text = await res.text();
 
   if (!res.ok) {
-    let msg = `Headscale API error ${res.status}`;
+    let msg = `Headscale API [${res.status}] ${url}`;
     try {
       const json = JSON.parse(text);
       msg = json.message || json.error || msg;
@@ -45,16 +51,34 @@ async function hsAPI(method, path, body = null) {
 }
 
 // ── Nodes ──────────────────────────────────────────────
+// Headscale v0.23+ utilise /node, les versions antérieures utilisent /machine
 
 async function listNodes() {
-  const data = await hsAPI('GET', '/machine');
-  return data.machines || data.nodes || [];
+  // Essaie d'abord /node (v0.23+), puis fallback sur /machine (v0.22-)
+  try {
+    const data = await hsAPI('GET', '/node');
+    return data.nodes || data.machines || [];
+  } catch (e) {
+    if (e.message.includes('404') || e.message.includes('not found')) {
+      const data = await hsAPI('GET', '/machine');
+      return data.machines || data.nodes || [];
+    }
+    throw e;
+  }
 }
 
 async function removeNode(nodeId) {
   const id = String(nodeId).replace(/\D/g, '');
   if (!id) throw new Error('Invalid node ID');
-  return hsAPI('DELETE', `/machine/${id}`);
+  // Essaie /node (v0.23+), puis fallback sur /machine (v0.22-)
+  try {
+    return await hsAPI('DELETE', `/node/${id}`);
+  } catch (e) {
+    if (e.message.includes('404') || e.message.includes('not found')) {
+      return await hsAPI('DELETE', `/machine/${id}`);
+    }
+    throw e;
+  }
 }
 
 // ── Users ──────────────────────────────────────────────

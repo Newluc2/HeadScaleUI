@@ -213,4 +213,35 @@ router.get('/config', requireAuth, (req, res) => {
   });
 });
 
+// ---- Debug / Health check ----
+router.get('/debug', requireAuth, async (req, res) => {
+  const result = {
+    headscaleUrl: config.headscaleUrl,
+    apiKeySet: !!config.headscaleApiKey,
+    apiKeyPrefix: config.headscaleApiKey ? config.headscaleApiKey.substring(0, 8) + '...' : 'NOT SET',
+  };
+
+  // Test connexion à l'API Headscale
+  try {
+    const r = await fetch(`${config.headscaleUrl}/api/v1/node`, {
+      headers: { 'Authorization': `Bearer ${config.headscaleApiKey}` }
+    });
+    result.apiTest = { status: r.status, endpoint: '/api/v1/node', ok: r.ok };
+  } catch (e) {
+    result.apiTest = { error: e.message, endpoint: '/api/v1/node' };
+  }
+
+  // Fallback test /machine
+  try {
+    const r2 = await fetch(`${config.headscaleUrl}/api/v1/machine`, {
+      headers: { 'Authorization': `Bearer ${config.headscaleApiKey}` }
+    });
+    result.apiTestLegacy = { status: r2.status, endpoint: '/api/v1/machine', ok: r2.ok };
+  } catch (e) {
+    result.apiTestLegacy = { error: e.message, endpoint: '/api/v1/machine' };
+  }
+
+  res.json(result);
+});
+
 module.exports = router;
