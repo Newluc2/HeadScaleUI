@@ -19,11 +19,15 @@ services:
     volumes:
       - webui-data:/app/data
       # Monte le binaire headscale de l'hôte dans le conteneur
+      # ⚠️ Vérifiez le chemin avec: which headscale
+      # Décommentez la bonne ligne selon votre installation :
       - /usr/local/bin/headscale:/usr/local/bin/headscale:ro
-      # Monte la config headscale de l'hôte (adapter le chemin si besoin)
+      # - /usr/bin/headscale:/usr/local/bin/headscale:ro
+      # Monte la config headscale de l'hôte
       - /etc/headscale:/etc/headscale:ro
-      # Monte le socket Unix si headscale l'utilise
+      # Monte le socket Unix et les données headscale
       - /var/run/headscale:/var/run/headscale
+      - /var/lib/headscale:/var/lib/headscale:ro
 
 volumes:
   webui-data:

@@ -1,5 +1,8 @@
 FROM node:20-alpine
 
+# Installer les dépendances nécessaires pour exécuter le binaire headscale
+RUN apk add --no-cache libc6-compat gcompat
+
 WORKDIR /app
 
 COPY package*.json ./
