@@ -1,139 +1,210 @@
 // ============================================================
-// Headscale WebUI - Headscale command executor
+// Headscale WebUI - Headscale API Client (HTTP)
 // ============================================================
 
-const { execFile } = require('child_process');
 const config = require('./config');
 
-/**
- * Execute a headscale command safely.
- * Only allows whitelisted subcommands.
- */
-function execHeadscale(args, timeout = 15000) {
-  return new Promise((resolve, reject) => {
-    // Validate first arg is an allowed subcommand
-    if (!args || args.length === 0) {
-      return reject(new Error('No arguments provided'));
-    }
-
-    const subcommand = args[0].replace(/^-+/, '').toLowerCase();
-    const isAllowed = config.allowedCommands.some(cmd =>
-      subcommand === cmd.replace(/^-+/, '').toLowerCase()
-    );
-
-    if (!isAllowed) {
-      return reject(new Error(`Command not allowed: ${args[0]}`));
-    }
-
-    // Sanitize arguments - prevent shell injection
-    const sanitized = args.map(arg => {
-      if (/[;&|`$(){}]/.test(arg)) {
-        throw new Error(`Invalid character in argument: ${arg}`);
-      }
-      return arg;
-    });
-
-    execFile(config.headscaleBin, sanitized, { timeout }, (err, stdout, stderr) => {
-      if (err) {
-        return reject(new Error(stderr || err.message));
-      }
-      resolve(stdout);
-    });
-  });
-}
+const BASE = config.headscaleUrl.replace(/\/+$/, '');
+const API_PREFIX = `${BASE}/api/v1`;
 
 /**
- * Parse headscale node list output (JSON format).
+ * Make an authenticated request to the Headscale API.
  */
-async function listNodes() {
-  try {
-    const output = await execHeadscale(['nodes', 'list', '-o', 'json']);
-    return JSON.parse(output);
-  } catch (e) {
-    // Fallback: try without json
-    const output = await execHeadscale(['nodes', 'list']);
-    return parseTextTable(output);
+async function hsAPI(method, path, body = null) {
+  if (!config.headscaleApiKey) {
+    throw new Error('HEADSCALE_API_KEY non configurée. Générez une clé avec: headscale apikeys create');
   }
+
+  const url = `${API_PREFIX}${path}`;
+  const opts = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${config.headscaleApiKey}`,
+      'Content-Type': 'application/json',
+    },
+  };
+
+  if (body) {
+    opts.body = JSON.stringify(body);
+  }
+
+  const res = await fetch(url, opts);
+  const text = await res.text();
+
+  if (!res.ok) {
+    let msg = `Headscale API error ${res.status}`;
+    try {
+      const json = JSON.parse(text);
+      msg = json.message || json.error || msg;
+    } catch { msg = text || msg; }
+    throw new Error(msg);
+  }
+
+  if (!text) return {};
+  return JSON.parse(text);
 }
 
-/**
- * Remove a node by ID.
- */
+// ── Nodes ──────────────────────────────────────────────
+
+async function listNodes() {
+  const data = await hsAPI('GET', '/machine');
+  return data.machines || data.nodes || [];
+}
+
 async function removeNode(nodeId) {
   const id = String(nodeId).replace(/\D/g, '');
   if (!id) throw new Error('Invalid node ID');
-  return execHeadscale(['nodes', 'delete', '-i', id, '--force']);
+  return hsAPI('DELETE', `/machine/${id}`);
 }
 
-/**
- * List users.
- */
+// ── Users ──────────────────────────────────────────────
+
 async function listHeadscaleUsers() {
-  try {
-    const output = await execHeadscale(['users', 'list', '-o', 'json']);
-    return JSON.parse(output);
-  } catch {
-    const output = await execHeadscale(['users', 'list']);
-    return parseTextTable(output);
-  }
+  const data = await hsAPI('GET', '/user');
+  return data.users || [];
 }
 
-/**
- * List preauthkeys for a user.
- */
-async function listPreauthKeys(user) {
-  try {
-    const output = await execHeadscale(['preauthkeys', 'list', '-u', user, '-o', 'json']);
-    return JSON.parse(output);
-  } catch {
-    const output = await execHeadscale(['preauthkeys', 'list', '-u', user]);
-    return parseTextTable(output);
-  }
-}
-
-/**
- * Create a preauthkey for a user.
- */
-async function createPreauthKey(user, opts = {}) {
-  const args = ['preauthkeys', 'create', '-u', user];
-  if (opts.reusable) args.push('--reusable');
-  if (opts.ephemeral) args.push('--ephemeral');
-  if (opts.expiration) args.push('-e', opts.expiration);
-  args.push('-o', 'json');
-
-  try {
-    const output = await execHeadscale(args);
-    return JSON.parse(output);
-  } catch {
-    // retry without json
-    const argsNoJson = args.filter(a => a !== '-o' && a !== 'json');
-    const output = await execHeadscale(argsNoJson);
-    return { raw: output.trim() };
-  }
-}
-
-/**
- * Create a user.
- */
 async function createHeadscaleUser(name) {
-  return execHeadscale(['users', 'create', name]);
+  return hsAPI('POST', '/user', { name });
 }
 
-/**
- * Parse simple text table output as fallback.
- */
-function parseTextTable(text) {
-  const lines = text.trim().split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [];
-  return lines.map(l => l.trim());
+// ── Preauthkeys ────────────────────────────────────────
+
+async function listPreauthKeys(user) {
+  const data = await hsAPI('GET', `/preauthkey?user=${encodeURIComponent(user)}`);
+  return data.preAuthKeys || data.preauthKeys || [];
+}
+
+async function createPreauthKey(user, opts = {}) {
+  const body = {
+    user: user,
+    reusable: opts.reusable || false,
+    ephemeral: opts.ephemeral || false,
+  };
+  if (opts.expiration) {
+    // Convertir "24h" en date ISO
+    const match = opts.expiration.match(/^(\d+)h$/);
+    if (match) {
+      const hours = parseInt(match[1]);
+      const exp = new Date(Date.now() + hours * 3600 * 1000);
+      body.expiration = exp.toISOString();
+    }
+  }
+  const data = await hsAPI('POST', '/preauthkey', body);
+  return data.preAuthKey || data.preauthKey || data;
+}
+
+// ── Shell (API proxy) ──────────────────────────────────
+
+async function execShellCommand(command) {
+  // Parse "headscale xxx" commands and map to API calls
+  const trimmed = command.trim();
+  if (!trimmed.startsWith('headscale')) {
+    throw new Error('Seules les commandes headscale sont autorisées');
+  }
+
+  const parts = trimmed.replace(/^headscale\s+/, '').split(/\s+/);
+  const sub = parts[0];
+
+  switch (sub) {
+    case 'nodes':
+    case 'node':
+      if (parts[1] === 'list' || !parts[1]) {
+        const nodes = await listNodes();
+        return formatNodesTable(nodes);
+      }
+      if (parts[1] === 'delete' || parts[1] === 'remove') {
+        const id = parts.find((p, i) => parts[i - 1] === '-i' || parts[i - 1] === '--identifier') || parts[2];
+        await removeNode(id);
+        return `Node ${id} supprimé.`;
+      }
+      break;
+
+    case 'users':
+    case 'user':
+      if (parts[1] === 'list' || !parts[1]) {
+        const users = await listHeadscaleUsers();
+        return formatUsersTable(users);
+      }
+      if (parts[1] === 'create' && parts[2]) {
+        await createHeadscaleUser(parts[2]);
+        return `User "${parts[2]}" créé.`;
+      }
+      break;
+
+    case 'preauthkeys':
+    case 'preauthkey':
+      if (parts[1] === 'list') {
+        const userFlag = parts.indexOf('-u');
+        const user = userFlag >= 0 ? parts[userFlag + 1] : parts[2];
+        if (!user) throw new Error('User requis: headscale preauthkeys list -u <user>');
+        const keys = await listPreauthKeys(user);
+        return formatKeysTable(keys);
+      }
+      break;
+
+    case 'version':
+      return 'Headscale (via API) - Utilisez l\'interface web pour les actions.';
+
+    case '--help':
+    case '-h':
+    case 'help':
+      return [
+        'Commandes disponibles (via API):',
+        '  headscale nodes list              - Lister les nodes',
+        '  headscale nodes delete -i <id>    - Supprimer un node',
+        '  headscale users list              - Lister les users',
+        '  headscale users create <name>     - Créer un user',
+        '  headscale preauthkeys list -u <u> - Lister les clés',
+      ].join('\n');
+
+    default:
+      throw new Error(`Sous-commande non supportée: ${sub}. Tapez "headscale help" pour l'aide.`);
+  }
+
+  throw new Error(`Commande non reconnue. Tapez "headscale help" pour l'aide.`);
+}
+
+// ── Formatters ─────────────────────────────────────────
+
+function formatNodesTable(nodes) {
+  if (!nodes.length) return 'Aucun node trouvé.';
+  const lines = ['ID\tNom\tUser\tIP\tOnline'];
+  for (const n of nodes) {
+    const name = n.givenName || n.given_name || n.name || '-';
+    const user = n.user?.name || n.user || '-';
+    const ips = (n.ipAddresses || n.ip_addresses || []).join(', ') || '-';
+    const online = n.online ? 'online' : 'offline';
+    lines.push(`${n.id}\t${name}\t${user}\t${ips}\t${online}`);
+  }
+  return lines.join('\n');
+}
+
+function formatUsersTable(users) {
+  if (!users.length) return 'Aucun user trouvé.';
+  const lines = ['ID\tNom\tCréé le'];
+  for (const u of users) {
+    lines.push(`${u.id}\t${u.name}\t${u.createdAt || u.created_at || '-'}`);
+  }
+  return lines.join('\n');
+}
+
+function formatKeysTable(keys) {
+  if (!keys.length) return 'Aucune clé trouvée.';
+  const lines = ['Clé\tRéutilisable\tÉphémère\tExpiration'];
+  for (const k of keys) {
+    const key = (k.key || k.id || '-').substring(0, 20) + '...';
+    lines.push(`${key}\t${k.reusable || false}\t${k.ephemeral || false}\t${k.expiration || '-'}`);
+  }
+  return lines.join('\n');
 }
 
 module.exports = {
-  execHeadscale,
   listNodes,
   removeNode,
   listHeadscaleUsers,
   listPreauthKeys,
   createPreauthKey,
-  createHeadscaleUser
+  createHeadscaleUser,
+  execShellCommand,
 };

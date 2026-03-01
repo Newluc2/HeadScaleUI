@@ -1,8 +1,5 @@
 FROM node:20-alpine
 
-# Installer les dépendances nécessaires pour exécuter le binaire headscale
-RUN apk add --no-cache libc6-compat gcompat
-
 WORKDIR /app
 
 COPY package*.json ./
@@ -12,9 +9,7 @@ COPY . .
 
 RUN mkdir -p /app/data
 
-# Le binaire headscale est monté depuis l'hôte via docker-compose
 ENV PORT=3000
-ENV HEADSCALE_BIN=headscale
 ENV SESSION_SECRET=change-me-in-production
 ENV ADMIN_USER=admin
 ENV ADMIN_PASS=admin

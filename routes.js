@@ -148,22 +148,12 @@ router.post('/shell', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Command required' });
     }
 
-    // Parse command - must start with "headscale"
     const trimmed = command.trim();
     if (!trimmed.startsWith('headscale')) {
       return res.status(403).json({ error: 'Only headscale commands are allowed' });
     }
 
-    // Remove "headscale" prefix and split args
-    const argsStr = trimmed.replace(/^headscale\s*/, '');
-    const args = argsStr.match(/(?:[^\s"]+|"[^"]*")/g) || [];
-    const cleanArgs = args.map(a => a.replace(/^"|"$/g, ''));
-
-    if (cleanArgs.length === 0) {
-      cleanArgs.push('--help');
-    }
-
-    const output = await hs.execHeadscale(cleanArgs, 30000);
+    const output = await hs.execShellCommand(trimmed);
     const db = await getDB();
     db.log(req.session.user.username, 'SHELL', trimmed);
     res.json({ output });

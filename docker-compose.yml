@@ -4,30 +4,18 @@ services:
     container_name: headscale-webui
     restart: unless-stopped
     network_mode: "host"
-    # Exécuter en tant que root pour accéder au binaire headscale et au socket
-    user: "0:0"
     environment:
       - PORT=3000
-      # URL publique de votre serveur Headscale
-      # Utilisée UNIQUEMENT pour générer la commande "tailscale up"
-      - HEADSCALE_URL=http://192.168.0.87:8080
-      - HEADSCALE_BIN=headscale
+      # URL de votre serveur Headscale (API + commande tailscale up)
+      - HEADSCALE_URL=http://127.0.0.1:8080
+      # Clé API Headscale - À GÉNÉRER avec: headscale apikeys create
+      - HEADSCALE_API_KEY=VOTRE_CLE_API_ICI
       - SESSION_SECRET=change-this-to-a-random-secret
       - ADMIN_USER=admin
       - ADMIN_PASS=admin
       - DB_PATH=/app/data/headscale-webui.db
     volumes:
       - webui-data:/app/data
-      # Monte le binaire headscale de l'hôte dans le conteneur
-      # ⚠️ Vérifiez le chemin avec: which headscale
-      # Décommentez la bonne ligne selon votre installation :
-      - /usr/local/bin/headscale:/usr/local/bin/headscale:ro
-      # - /usr/bin/headscale:/usr/local/bin/headscale:ro
-      # Monte la config headscale de l'hôte
-      - /etc/headscale:/etc/headscale:ro
-      # Monte le socket Unix et les données headscale
-      - /var/run/headscale:/var/run/headscale
-      - /var/lib/headscale:/var/lib/headscale:ro
 
 volumes:
   webui-data:

@@ -9,11 +9,11 @@ module.exports = {
   // Session secret (change this in production!)
   sessionSecret: process.env.SESSION_SECRET || 'headscale-webui-secret-change-me',
 
-  // Headscale server URL (used for generating tailscale up commands)
-  headscaleUrl: process.env.HEADSCALE_URL || 'https://headscale.example.com',
+  // Headscale server URL (API + used for generating tailscale up commands)
+  headscaleUrl: process.env.HEADSCALE_URL || 'http://127.0.0.1:8080',
 
-  // Path to headscale binary
-  headscaleBin: process.env.HEADSCALE_BIN || 'headscale',
+  // Headscale API Key (généré avec: headscale apikeys create)
+  headscaleApiKey: process.env.HEADSCALE_API_KEY || '',
 
   // Default admin credentials (change on first login!)
   defaultAdmin: {
@@ -26,16 +26,4 @@ module.exports = {
 
   // Database file path
   dbPath: process.env.DB_PATH || './data/headscale-webui.db',
-
-  // Allowed headscale subcommands in shell
-  allowedCommands: [
-    'node', 'nodes', 'user', 'users',
-    'preauthkeys', 'preauthkey',
-    'routes', 'route',
-    'apikeys', 'apikey',
-    'debug',
-    'serve',
-    'version',
-    '--help', '-h'
-  ]
 };
