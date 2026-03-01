@@ -3,9 +3,9 @@ services:
     build: .
     container_name: headscale-webui
     restart: unless-stopped
-    # network_mode host pour que le conteneur utilise
-    # directement le binaire headscale installé sur la machine
     network_mode: "host"
+    # Exécuter en tant que root pour accéder au binaire headscale et au socket
+    user: "0:0"
     environment:
       - PORT=3000
       # URL publique de votre serveur Headscale
