@@ -10,7 +10,7 @@ services:
       - PORT=3000
       # URL publique de votre serveur Headscale
       # Utilisée UNIQUEMENT pour générer la commande "tailscale up"
-      - HEADSCALE_URL=http://VOTRE_IP_OU_DOMAINE:8080
+      - HEADSCALE_URL=http://192.168.0.87:8080
       - HEADSCALE_BIN=headscale
       - SESSION_SECRET=change-this-to-a-random-secret
       - ADMIN_USER=admin
