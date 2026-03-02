@@ -221,24 +221,35 @@ router.get('/debug', requireAuth, async (req, res) => {
     apiKeyPrefix: config.headscaleApiKey ? config.headscaleApiKey.substring(0, 8) + '...' : 'NOT SET',
   };
 
-  // Test connexion à l'API Headscale
+  // Test /node
   try {
     const r = await fetch(`${config.headscaleUrl}/api/v1/node`, {
       headers: { 'Authorization': `Bearer ${config.headscaleApiKey}` }
     });
-    result.apiTest = { status: r.status, endpoint: '/api/v1/node', ok: r.ok };
+    result.nodeEndpoint = { status: r.status, ok: r.ok };
   } catch (e) {
-    result.apiTest = { error: e.message, endpoint: '/api/v1/node' };
+    result.nodeEndpoint = { error: e.message };
   }
 
-  // Fallback test /machine
+  // Test /user
   try {
-    const r2 = await fetch(`${config.headscaleUrl}/api/v1/machine`, {
+    const r = await fetch(`${config.headscaleUrl}/api/v1/user`, {
       headers: { 'Authorization': `Bearer ${config.headscaleApiKey}` }
     });
-    result.apiTestLegacy = { status: r2.status, endpoint: '/api/v1/machine', ok: r2.ok };
+    const body = await r.text();
+    result.userEndpoint = { status: r.status, ok: r.ok, body: body.substring(0, 200) };
   } catch (e) {
-    result.apiTestLegacy = { error: e.message, endpoint: '/api/v1/machine' };
+    result.userEndpoint = { error: e.message };
+  }
+
+  // Test preauthkey (liste uniquement, sans user)
+  try {
+    const r = await fetch(`${config.headscaleUrl}/api/v1/preauthkey`, {
+      headers: { 'Authorization': `Bearer ${config.headscaleApiKey}` }
+    });
+    result.preauthkeyEndpoint = { status: r.status, ok: r.ok };
+  } catch (e) {
+    result.preauthkeyEndpoint = { error: e.message };
   }
 
   res.json(result);

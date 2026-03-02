@@ -95,27 +95,56 @@ async function createHeadscaleUser(name) {
 // ── Preauthkeys ────────────────────────────────────────
 
 async function listPreauthKeys(user) {
-  const data = await hsAPI('GET', `/preauthkey?user=${encodeURIComponent(user)}`);
-  return data.preAuthKeys || data.preauthKeys || [];
+  // v0.23+: GET /api/v1/preauthkey?user=<name>
+  try {
+    const data = await hsAPI('GET', `/preauthkey?user=${encodeURIComponent(user)}`);
+    return data.preAuthKeys || data.preauthKeys || [];
+  } catch (e) {
+    // Certaines versions utilisent /user/:name/preauthkey
+    try {
+      const data = await hsAPI('GET', `/user/${encodeURIComponent(user)}/preauthkey`);
+      return data.preAuthKeys || data.preauthKeys || [];
+    } catch {
+      throw e;
+    }
+  }
 }
 
 async function createPreauthKey(user, opts = {}) {
-  const body = {
-    user: user,
-    reusable: opts.reusable || false,
-    ephemeral: opts.ephemeral || false,
-  };
+  // Calcul de la date d'expiration ISO
+  let expiration = null;
   if (opts.expiration) {
-    // Convertir "24h" en date ISO
     const match = opts.expiration.match(/^(\d+)h$/);
     if (match) {
       const hours = parseInt(match[1]);
-      const exp = new Date(Date.now() + hours * 3600 * 1000);
-      body.expiration = exp.toISOString();
+      expiration = new Date(Date.now() + hours * 3600 * 1000).toISOString();
     }
   }
-  const data = await hsAPI('POST', '/preauthkey', body);
-  return data.preAuthKey || data.preauthKey || data;
+
+  // Format Headscale v0.23+ : body avec "user" en string
+  const body = {
+    user:      user,
+    reusable:  opts.reusable  || false,
+    ephemeral: opts.ephemeral || false,
+  };
+  if (expiration) body.expiration = expiration;
+
+  try {
+    const data = await hsAPI('POST', '/preauthkey', body);
+    return data.preAuthKey || data.preauthKey || data;
+  } catch (e) {
+    // Fallback : certaines versions attendent l'user dans l'URL
+    try {
+      const data = await hsAPI('POST', `/user/${encodeURIComponent(user)}/preauthkey`, {
+        reusable:   opts.reusable  || false,
+        ephemeral:  opts.ephemeral || false,
+        ...(expiration ? { expiration } : {}),
+      });
+      return data.preAuthKey || data.preauthKey || data;
+    } catch {
+      throw e; // Remonte l'erreur originale
+    }
+  }
 }
 
 // ── Shell (API proxy) ──────────────────────────────────
