@@ -662,6 +662,9 @@ input, select, textarea {
 .terminal-line.output {
   color: var(--terminal-text);
   white-space: pre-wrap;
+  margin: 0 0 0.25rem 0;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 .terminal-input-line {

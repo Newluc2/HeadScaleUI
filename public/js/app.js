@@ -360,9 +360,16 @@ const App = {
 
     try {
       const data = await API.execShell(command);
-      const outLine = document.createElement('div');
+      const raw = data.output || '(aucune sortie)';
+      // Essaie de pretty-print le JSON
+      let formatted = raw;
+      try {
+        const parsed = JSON.parse(raw);
+        formatted = JSON.stringify(parsed, null, 2);
+      } catch { /* pas du JSON, laisser tel quel */ }
+      const outLine = document.createElement('pre');
       outLine.className = 'terminal-line output';
-      outLine.textContent = data.output || '(aucune sortie)';
+      outLine.textContent = formatted;
       output.appendChild(outLine);
     } catch (e) {
       const errLine = document.createElement('div');
