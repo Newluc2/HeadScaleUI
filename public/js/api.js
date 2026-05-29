@@ -8,10 +8,22 @@ const API = {
       headers: { 'Content-Type': 'application/json', ...opts.headers },
       ...opts
     });
-    const data = await res.json();
+    
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (e) {
+      // Response is not JSON
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+    }
+    
     if (!res.ok) {
       if (res.status === 401 && !url.includes('/auth/login')) {
-        App.showLogin();
+        if (typeof App !== 'undefined') {
+          App.showLogin();
+        }
       }
       throw new Error(data.error || `HTTP ${res.status}`);
     }
