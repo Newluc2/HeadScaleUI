@@ -8,10 +8,26 @@ const API = {
       headers: { 'Content-Type': 'application/json', ...opts.headers },
       ...opts
     });
-    const data = await res.json();
+    
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (e) {
+      // Response is not JSON
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      // For successful responses with non-JSON content, log but continue
+      if (res.status < 400) {
+        console.debug('API returned non-JSON content for successful response:', url);
+      }
+    }
+    
     if (!res.ok) {
       if (res.status === 401 && !url.includes('/auth/login')) {
-        App.showLogin();
+        if (typeof App !== 'undefined') {
+          App.showLogin();
+        }
       }
       throw new Error(data.error || `HTTP ${res.status}`);
     }

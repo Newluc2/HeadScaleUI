@@ -6,6 +6,7 @@ const config = require('./config');
 
 const BASE = config.headscaleUrl.replace(/\/+$/, '');
 const API_PREFIX = `${BASE}/api/v1`;
+const MAX_ERROR_MESSAGE_LENGTH = 200;
 
 /**
  * Make an authenticated request to the Headscale API.
@@ -42,7 +43,12 @@ async function hsAPI(method, path, body = null) {
     try {
       const json = JSON.parse(text);
       msg = json.message || json.error || msg;
-    } catch { msg = text || msg; }
+    } catch {
+      // Not JSON, extract first line if it looks like HTML
+      if (text && !text.startsWith('<')) {
+        msg = text.split('\n')[0].substring(0, MAX_ERROR_MESSAGE_LENGTH);
+      }
+    }
     throw new Error(msg);
   }
 
@@ -231,6 +237,13 @@ function formatJSON(data, resource) {
 
 async function execShellCommand(command) {
   const trimmed = command.trim();
+
+  // Defense in depth: validate again at execution layer
+  // Include single/double quotes to prevent quote escaping attacks
+  const dangerousPatterns = /[;&|`$(){}\[\]<>\\!'"\n\r\t]/;
+  if (dangerousPatterns.test(trimmed)) {
+    throw new Error('Shell metacharacters are not allowed');
+  }
 
   // Aide générale
   if (trimmed === 'help' || trimmed === '--help' || trimmed === '-h') {
