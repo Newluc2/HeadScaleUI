@@ -239,7 +239,8 @@ async function execShellCommand(command) {
   const trimmed = command.trim();
 
   // Defense in depth: validate again at execution layer
-  const dangerousPatterns = /[;&|`$(){}[\]<>\\!\n\r\t]/;
+  // Include single/double quotes to prevent quote escaping attacks
+  const dangerousPatterns = /[;&|`$(){}\[\]<>\\!'"\n\r\t]/;
   if (dangerousPatterns.test(trimmed)) {
     throw new Error('Shell metacharacters are not allowed');
   }

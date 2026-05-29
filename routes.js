@@ -156,14 +156,15 @@ router.post('/shell', requireAdmin, async (req, res) => {
     }
     
     // Reject shell metacharacters and dangerous patterns
-    const dangerousPatterns = /[;&|`$(){}[\]<>\\!\n\r\t]/;
+    // Include single/double quotes to prevent quote escaping attacks
+    const dangerousPatterns = /[;&|`$(){}\[\]<>\\!'"\n\r\t]/;
     if (dangerousPatterns.test(trimmed)) {
       return res.status(403).json({ error: 'Shell metacharacters are not allowed' });
     }
     
     // Verify command structure: must match "headscale [args]" pattern
-    // Allow: alphanumeric, hyphens, underscores, dots, commas, equals, spaces
-    if (!/^headscale(\s+[a-zA-Z0-9\-_.,:=]+)*$/i.test(trimmed)) {
+    // Allow: alphanumeric, hyphens, underscores, dots, equals, spaces
+    if (!/^headscale(\s+[a-zA-Z0-9\-_.=]+)*$/i.test(trimmed)) {
       return res.status(403).json({ error: 'Invalid command format' });
     }
 
