@@ -119,11 +119,20 @@ const App = {
             <td><span class="status ${statusClass}"><span class="status-dot"></span>${statusText}</span></td>
             <td>${lastSeen}</td>
             <td>
-              ${this.user.role === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="App.confirmDeleteNode('${id}', '${this.escapeHtml(name)}')">Supprimer</button>` : ''}
+              ${this.user.role === 'admin' ? `<button class="btn btn-danger btn-sm" data-node-id="${this.escapeHtml(String(id))}" data-node-name="${this.escapeHtml(name)}">Supprimer</button>` : ''}
             </td>
           </tr>
         `;
       }).join('');
+
+      // Setup delete button handler
+      tbody.querySelectorAll('[data-node-id]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.target.dataset.nodeId;
+          const name = e.target.dataset.nodeName;
+          await this.confirmDeleteNode(id, name);
+        });
+      });
 
       table.classList.remove('hidden');
     } catch (e) {
@@ -444,10 +453,18 @@ const App = {
           <div class="key-meta">
             <span class="badge ${u.role === 'admin' ? 'badge-warning' : 'badge-info'}">${u.role}</span>
             <span>Créé: ${this.formatDate(u.created_at)}</span>
-            ${u.username !== this.user.username ? `<button class="btn btn-danger btn-sm" onclick="App.deleteWebuiUser(${u.id})">Supprimer</button>` : ''}
+            ${u.username !== this.user.username ? `<button class="btn btn-danger btn-sm" data-user-id="${String(u.id).replace(/"/g, '&quot;')}">Supprimer</button>` : ''}
           </div>
         </div>
       `).join('');
+      
+      // Setup delete button handlers
+      list.querySelectorAll('[data-user-id]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.target.dataset.userId;
+          await this.deleteWebuiUser(id);
+        });
+      });
     } catch (e) {
       list.innerHTML = `<p class="error-msg">${e.message}</p>`;
     }

@@ -42,7 +42,12 @@ async function hsAPI(method, path, body = null) {
     try {
       const json = JSON.parse(text);
       msg = json.message || json.error || msg;
-    } catch { msg = text || msg; }
+    } catch {
+      // Not JSON, extract first line if it looks like HTML
+      if (text && !text.startsWith('<')) {
+        msg = text.split('\n')[0].substring(0, 200);
+      }
+    }
     throw new Error(msg);
   }
 
