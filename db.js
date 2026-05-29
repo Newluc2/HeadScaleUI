@@ -24,8 +24,17 @@ class DB {
 
     // Load existing database or create new one
     if (fs.existsSync(config.dbPath)) {
-      const buffer = fs.readFileSync(config.dbPath);
-      this.db = new SQL.Database(buffer);
+      try {
+        const buffer = fs.readFileSync(config.dbPath);
+        this.db = new SQL.Database(buffer);
+      } catch (e) {
+        console.error(`[DB] Error loading database file: ${e.message}. Creating new database.`);
+        this.db = new SQL.Database();
+        // Backup corrupted file
+        try {
+          fs.renameSync(config.dbPath, config.dbPath + '.backup');
+        } catch { }
+      }
     } else {
       this.db = new SQL.Database();
     }
