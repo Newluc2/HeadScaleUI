@@ -119,7 +119,7 @@ const App = {
             <td><span class="status ${statusClass}"><span class="status-dot"></span>${statusText}</span></td>
             <td>${lastSeen}</td>
             <td>
-              ${this.user.role === 'admin' ? `<button class="btn btn-danger btn-sm" data-node-id="${this.escapeHtml(String(id))}" data-node-name="${this.escapeHtml(name)}">Supprimer</button>` : ''}
+              ${this.user.role === 'admin' ? `<button class="btn btn-danger btn-sm" data-node-id="${this.escapeHtml(id)}" data-node-name="${this.escapeHtml(name)}">Supprimer</button>` : ''}
             </td>
           </tr>
         `;
@@ -453,7 +453,7 @@ const App = {
           <div class="key-meta">
             <span class="badge ${u.role === 'admin' ? 'badge-warning' : 'badge-info'}">${u.role}</span>
             <span>Créé: ${this.formatDate(u.created_at)}</span>
-            ${u.username !== this.user.username ? `<button class="btn btn-danger btn-sm" data-user-id="${String(u.id).replace(/"/g, '&quot;')}">Supprimer</button>` : ''}
+            ${u.username !== this.user.username ? `<button class="btn btn-danger btn-sm" data-user-id="${this.escapeHtml(String(u.id))}">Supprimer</button>` : ''}
           </div>
         </div>
       `).join('');

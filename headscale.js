@@ -6,6 +6,7 @@ const config = require('./config');
 
 const BASE = config.headscaleUrl.replace(/\/+$/, '');
 const API_PREFIX = `${BASE}/api/v1`;
+const MAX_ERROR_MESSAGE_LENGTH = 200;
 
 /**
  * Make an authenticated request to the Headscale API.
@@ -45,7 +46,7 @@ async function hsAPI(method, path, body = null) {
     } catch {
       // Not JSON, extract first line if it looks like HTML
       if (text && !text.startsWith('<')) {
-        msg = text.split('\n')[0].substring(0, 200);
+        msg = text.split('\n')[0].substring(0, MAX_ERROR_MESSAGE_LENGTH);
       }
     }
     throw new Error(msg);

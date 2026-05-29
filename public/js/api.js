@@ -17,6 +17,10 @@ const API = {
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
+      // For successful responses with non-JSON content, log but continue
+      if (res.status < 400) {
+        console.debug('API returned non-JSON content for successful response:', url);
+      }
     }
     
     if (!res.ok) {
